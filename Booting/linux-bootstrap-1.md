@@ -15,7 +15,7 @@
 
 不管怎样，如果你才开始学一些，我会在这些文章中尝试去解释一些部分。好了，小的介绍结束，我们开始深入内核和底层。
 
-我们的文章是基于 Linux 内核 3.18 版本进行的，如果后续的内核版本有任何改变，我将作出相应的更新。
+我们的文章是基于 [Linux 内核 3.18 版本](https://elixir.bootlin.com/linux/v3.18/source)进行的，如果后续的内核版本有任何改变，我将作出相应的更新。
 
 神奇的电源按钮，接下来会发生什么？
 --------------------------------------------------------------------------------
@@ -187,13 +187,13 @@ PhysicalAddress = Segment * 16 + Offset
 引导程序
 --------------------------------------------------------------------------------
 
-在现实世界中，要启动 Linux 系统，有多种引导程序可以选择。比如 [GRUB 2](https://www.gnu.org/software/grub/) 和 [syslinux](http://www.syslinux.org/wiki/index.php/The_Syslinux_Project)。Linux内核通过 [Boot protocol](http://lxr.free-electrons.com/source/Documentation/x86/boot.txt?v=3.18) 来定义应该如何实现引导程序。在这里我们将只介绍 GRUB 2。
+在现实世界中，要启动 Linux 系统，有多种引导程序可以选择。比如 [GRUB 2](https://www.gnu.org/software/grub/) 和 [syslinux](http://www.syslinux.org/wiki/index.php/The_Syslinux_Project)。Linux内核通过 [Boot protocol](https://elixir.bootlin.com/linux/v3.18/source/Documentation/x86/boot.txt) 来定义应该如何实现引导程序。在这里我们将只介绍 GRUB 2。
 
 现在 BIOS 已经选择了一个启动设备，并且将控制权转移给了启动扇区中的代码，在我们的例子中，启动扇区代码是 [boot.img](http://git.savannah.gnu.org/gitweb/?p=grub.git;a=blob;f=grub-core/boot/i386/pc/boot.S;hb=HEAD)。因为这段代码只能占用一个扇区，因此非常简单，只做一些必要的初始化，然后就跳转到 GRUB 2's core image 去执行。 Core image 的代码请参考 [diskboot.img](http://git.savannah.gnu.org/gitweb/?p=grub.git;a=blob;f=grub-core/boot/i386/pc/diskboot.S;hb=HEAD)，一般来说 core image 在磁盘上存储在启动扇区之后到第一个可用分区之前。core image 的初始化代码会把整个 core image （包括 GRUB 2的内核代码和文件系统驱动） 引导到内存中。 引导完成之后，[grub_main](http://git.savannah.gnu.org/gitweb/?p=grub.git;a=blob;f=grub-core/kern/main.c)将被调用。
 
 `grub_main` 初始化控制台，计算模块基地址，设置 root 设备，读取 grub 配置文件，加载模块。最后，将 GRUB 置于 normal 模式，在这个模式中，`grub_normal_execute` (from `grub-core/normal/main.c`) 将被调用以完成最后的准备工作，然后显示一个菜单列出所用可用的操作系统。当某个操作系统被选择之后，`grub_menu_execute_entry` 开始执行，它将调用 GRUB 的 `boot` 命令，来引导被选中的操作系统。
 
-就像 kernel boot protocol 所描述的，引导程序必须填充 kernel setup header （位于 kernel setup code 偏移 `0x01f1` 处）  的必要字段。kernel setup header的定义开始于 [arch/x86/boot/header.S](http://lxr.free-electrons.com/source/arch/x86/boot/header.S?v=3.18)：
+就像 kernel boot protocol 所描述的，引导程序必须填充 kernel setup header （位于 kernel setup code 偏移 `0x01f1` 处）  的必要字段。kernel setup header的定义开始于 [arch/x86/boot/header.S](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/header.S)：
 
 ```assembly
 	.globl hdr
@@ -207,7 +207,7 @@ hdr:
 	boot_flag:   .word 0xAA55
 ```
 
-bootloader必须填充在 Linux boot protocol 中标记为 `write` 的头信息，比如 [type_of_loader](http://lxr.free-electrons.com/source/Documentation/x86/boot.txt?v=3.18#L354)，这些头信息可能来自命令行，或者通过计算得到。在这里我们不会详细介绍所有的 kernel setup header，我们将在需要的时候逐个介绍。不过，你可以自己通过 [boot protocol](http://lxr.free-electrons.com/source/Documentation/x86/boot.txt?v=3.18#L156) 来了解这些设置。
+bootloader必须填充在 Linux boot protocol 中标记为 `write` 的头信息，比如 [type_of_loader](https://elixir.bootlin.com/linux/v3.18/source/Documentation/x86/boot.txt#L354)，这些头信息可能来自命令行，或者通过计算得到。在这里我们不会详细介绍所有的 kernel setup header，我们将在需要的时候逐个介绍。不过，你可以自己通过 [boot protocol](https://elixir.bootlin.com/linux/v3.18/source/Documentation/x86/boot.txt#L156) 来了解这些设置。
 
 通过阅读 kernel boot protocol，在内核被引导入内存后，内存使用情况将如下表所示：
 
@@ -252,7 +252,7 @@ X+08000  +------------------------+
 内核设置
 --------------------------------------------------------------------------------
 
-经过上面的一系列操作，我们终于进入到内核了。不过从技术上说，内核还没有被运行起来，因为首先我们需要正确设置内核，启动内存管理，进程管理等等。内核设置代码的运行起点是 [arch/x86/boot/header.S](http://lxr.free-electrons.com/source/arch/x86/boot/header.S?v=3.18) 中定义的 [_start](http://lxr.free-electrons.com/source/arch/x86/boot/header.S?v=3.18#L293) 函数。 在 `_start` 函数开始之前，还有很多的代码，那这些代码是做什么的呢？
+经过上面的一系列操作，我们终于进入到内核了。不过从技术上说，内核还没有被运行起来，因为首先我们需要正确设置内核，启动内存管理，进程管理等等。内核设置代码的运行起点是 [arch/x86/boot/header.S](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/header.S) 中定义的 [_start](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/header.S#L293) 函数。 在 `_start` 函数开始之前，还有很多的代码，那这些代码是做什么的呢？
 
 实际上 `_start` 开始之前的代码是 kernel 自带的 bootloader。在很久以前，是可以使用这个 bootloader 来启动 Linux 的。不过在新的 Linux 中，这个 bootloader 代码已经不再启动 Linux 内核，而只是输出一个错误信息。 如果你运行下面的命令，直接使用 Linux 内核来启动，你会看到下图所示的错误：
 
@@ -331,7 +331,7 @@ cs = 0x1020
 * 将所有段寄存器的值设置成一样的内容
 * 设置堆栈
 * 设置 [bss](https://en.wikipedia.org/wiki/.bss) （静态变量区）
-* 跳转到 [main.c](http://lxr.free-electrons.com/source/arch/x86/boot/main.c?v=3.18) 开始执行代码
+* 跳转到 [main.c](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/main.c) 开始执行代码
 
 段寄存器设置
 --------------------------------------------------------------------------------
@@ -352,12 +352,12 @@ cs = 0x1020
 	lretw
 ```
 
-上面的代码使用了一个小小的技巧来重置 `cs` 寄存器的内容，下面我们就来仔细分析。 这段代码首先将 `ds`寄存器的值入栈，然后将标号为 [6](http://lxr.free-electrons.com/source/arch/x86/boot/header.S?v=3.18#L494) 的代码段地址入栈 ，接着执行 `lretw` 指令，这条指令，将把标号为 `6` 的内存地址放入 `ip` 寄存器 （[instruction pointer](https://en.wikipedia.org/wiki/Program_counter)），将 `ds` 寄存器的值放入 `cs` 寄存器。 这样一来 `ds` 和 `cs` 段寄存器就拥有了相同的值。
+上面的代码使用了一个小小的技巧来重置 `cs` 寄存器的内容，下面我们就来仔细分析。 这段代码首先将 `ds`寄存器的值入栈，然后将标号为 [6](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/header.S#L494) 的代码段地址入栈 ，接着执行 `lretw` 指令，这条指令，将把标号为 `6` 的内存地址放入 `ip` 寄存器 （[instruction pointer](https://en.wikipedia.org/wiki/Program_counter)），将 `ds` 寄存器的值放入 `cs` 寄存器。 这样一来 `ds` 和 `cs` 段寄存器就拥有了相同的值。
 
 设置堆栈
 --------------------------------------------------------------------------------
 
-绝大部分的 setup 代码都是为 C 语言运行环境做准备。在设置了 `ds` 和 `es` 寄存器之后，接下来 [step](http://lxr.free-electrons.com/source/arch/x86/boot/header.S?v=3.18#L467) 的代码将检查 `ss` 寄存器的内容，如果寄存器的内容不对，那么将进行更正：
+绝大部分的 setup 代码都是为 C 语言运行环境做准备。在设置了 `ds` 和 `es` 寄存器之后，接下来 [step](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/header.S#L467) 的代码将检查 `ss` 寄存器的内容，如果寄存器的内容不对，那么将进行更正：
 
 ```assembly
 	movw	%ss, %dx
@@ -389,7 +389,7 @@ cs = 0x1020
 
 ![stack](https://github.com/0xAX/linux-insides/raw/master/Booting/images/stack1.png)
 
-* 下面让我们来看 `ss` != `ds`的情况，首先将 setup code 的结束地址 [_end](http://lxr.free-electrons.com/source/arch/x86/boot/setup.ld?v=3.18#L52) 写入 `dx` 寄存器。然后检查 `loadflags` 中是否设置了 `CAN_USE_HEAP` 标志。   根据 kernel boot protocol 的定义，[loadflags](http://lxr.free-electrons.com/source/arch/x86/boot/header.S?v=3.18#L321) 是一个标志字段。这个字段的 `Bit 7` 就是 `CAN_USE_HEAP` 标志：
+* 下面让我们来看 `ss` != `ds`的情况，首先将 setup code 的结束地址 [_end](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/setup.ld#L52) 写入 `dx` 寄存器。然后检查 `loadflags` 中是否设置了 `CAN_USE_HEAP` 标志。   根据 kernel boot protocol 的定义，[loadflags](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/header.S#L321) 是一个标志字段。这个字段的 `Bit 7` 就是 `CAN_USE_HEAP` 标志：
 
 ```
 Field name:	loadflags
@@ -422,7 +422,7 @@ Field name:	loadflags
 BSS段设置
 --------------------------------------------------------------------------------
 
-在我们正式执行 C 代码之前，我们还有2件事情需要完成。1）设置正确的 [BSS](https://en.wikipedia.org/wiki/.bss)段 ；2）检查 `magic` 签名。接下来的代码，首先检查 `magic` 签名 [setup_sig](http://lxr.free-electrons.com/source/arch/x86/boot/setup.ld?v=3.18#L39)，如果签名不对，直接跳转到 `setup_bad` 部分执行代码：
+在我们正式执行 C 代码之前，我们还有2件事情需要完成。1）设置正确的 [BSS](https://en.wikipedia.org/wiki/.bss)段 ；2）检查 `magic` 签名。接下来的代码，首先检查 `magic` 签名 [setup_sig](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/setup.ld#L39)，如果签名不对，直接跳转到 `setup_bad` 部分执行代码：
 
 ```assembly
 cmpl	$0x5a5aaa55, setup_sig
@@ -442,7 +442,7 @@ BSS 段用来存储那些没有被初始化的静态变量。对于这个段使�
 	rep; stosl
 ```
 
-在这段代码中，首先将 [__bss_start](http://lxr.free-electrons.com/source/arch/x86/boot/setup.ld?v=3.18#L47) 地址放入 `di` 寄存器，然后将 `_end + 3` （4字节对齐） 地址放入 `cx`，接着使用 `xor` 指令将 `ax` 寄存器清零，接着计算 BSS 段的大小 （ `cx` - `di` ），然后将大小放入 `cx` 寄存器。接下来将 `cx` 寄存器除4，最后使用 `rep; stosl` 指令将 `ax` 寄存器的值（0）写入 寄存器整个 BSS 段。 代码执行完成之后，我们将得到如下图所示的 BSS 段:
+在这段代码中，首先将 [__bss_start](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/setup.ld#L47) 地址放入 `di` 寄存器，然后将 `_end + 3` （4字节对齐） 地址放入 `cx`，接着使用 `xor` 指令将 `ax` 寄存器清零，接着计算 BSS 段的大小 （ `cx` - `di` ），然后将大小放入 `cx` 寄存器。接下来将 `cx` 寄存器除4，最后使用 `rep; stosl` 指令将 `ax` 寄存器的值（0）写入 寄存器整个 BSS 段。 代码执行完成之后，我们将得到如下图所示的 BSS 段:
 
 ![bss](https://github.com/0xAX/linux-insides/raw/master/Booting/images/bss.png)
 
@@ -455,7 +455,7 @@ BSS 段用来存储那些没有被初始化的静态变量。对于这个段使�
 	call main
 ```
 
-`main()` 函数定义在 [arch/x86/boot/main.c](http://lxr.free-electrons.com/source/arch/x86/boot/main.c?v=3.18)，我们将在下一章详细介绍这个函数做了什么事情。
+`main()` 函数定义在 [arch/x86/boot/main.c](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/boot/main.c)，我们将在下一章详细介绍这个函数做了什么事情。
 
 结束语
 --------------------------------------------------------------------------------

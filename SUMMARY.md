@@ -59,7 +59,7 @@
     * [kmemcheck](MM/linux-mm-3.md)
 * [控制组](Cgroups/README.md)
 	* [控制组简介](Cgroups/linux-cgroups-1.md)
-* [SMP]()
+<!-- * [SMP]() -->
 * [概念](Concepts/README.md)
     * [每个 CPU 的变量](Concepts/linux-cpu-1.md)
     * [CPU 掩码](Concepts/linux-cpu-2.md)
@@ -75,8 +75,8 @@
     * [內联汇编](Theory/linux-theory-3.md)
     * [CPUID]()
     * [MSR]()
-* [Initial ram disk]()
-    * [initrd]()
+<!-- * [Initial ram disk]()
+    * [initrd]() -->
 * [杂项](Misc/README.md)
     * [Linux 内核开发](Misc/linux-misc-1.md)
     * [内核编译方法](Misc/linux-misc-2.md)

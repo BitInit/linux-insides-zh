@@ -17,7 +17,7 @@
 
 `不可屏蔽`中断（NMI）不受rFLAGS.IF位的影响。 无论怎样一个NMI的发生都会进一步屏蔽之后的其他NMI，直到执行IRET（中断返回）指令。
 
-具体的异常和中断来源被分配了固定的向量标识号（也称“中断向量”或简称“向量”）。中断处理程序使用中断向量来定位异常或中断，从而分配相应的系统软件服务处理程序。有至多256个特殊的中断向量可用。前32个是保留的，用于预定义的异常和中断条件。请参考[arch / x86 / include / asm / traps.h](http://lxr.free-electrons.com/source/arch/x86/include/asm/traps.h#L121)头文件中对他们的定义：
+具体的异常和中断来源被分配了固定的向量标识号（也称“中断向量”或简称“向量”）。中断处理程序使用中断向量来定位异常或中断，从而分配相应的系统软件服务处理程序。有至多256个特殊的中断向量可用。前32个是保留的，用于预定义的异常和中断条件。请参考[arch / x86 / include / asm / traps.h](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/include/asm/traps.h#L121)头文件中对他们的定义：
 
 
 ```
@@ -152,7 +152,7 @@ struct gate_struct64 {
 } __attribute__((packed));
 ```
 
-它定义在 [arch/x86/include/asm/desc_defs.h](http://lxr.free-electrons.com/source/arch/x86/include/asm/desc_defs.h#L51) 头文件中。
+它定义在 [arch/x86/include/asm/desc_defs.h](https://elixir.bootlin.com/linux/v3.18/source/arch/x86/include/asm/desc_defs.h#L51) 头文件中。
 
 任务门描述符不包含`IST`字段，并且其格式与中断/陷阱门不同：
 

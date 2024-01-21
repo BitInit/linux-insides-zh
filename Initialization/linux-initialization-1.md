@@ -377,7 +377,7 @@ GLOBAL(stack_start)
 #define THREAD_SIZE  (PAGE_SIZE << THREAD_SIZE_ORDER)
 ```
 
-首先来考虑当禁用了 [kasan](http://lxr.free-electrons.com/source/Documentation/kasan.txt) 并且 `PAGE_SIZE` 大小为4096时的情况。此时 `THREAD_SIZE` 将为 `16` KB，代表了一个线程的栈的大小。为什么是`线程`？我们知道每一个[进程](https://en.wikipedia.org/wiki/Process_%28computing%29)可能会有[父进程](https://en.wikipedia.org/wiki/Parent_process)和[子进程](https://en.wikipedia.org/wiki/Child_process)。事实上，父进程和子进程使用不同的栈空间，每一个新进程都会拥有一个新的内核栈。在Linux内核中，这个栈由 `thread_info` 结构中的一个[union](https://en.wikipedia.org/wiki/Union_type#C.2FC.2B.2B)表示：
+首先来考虑当禁用了 [kasan](https://elixir.bootlin.com/linux/v3.18/source/Documentation/kasan.txt) 并且 `PAGE_SIZE` 大小为4096时的情况。此时 `THREAD_SIZE` 将为 `16` KB，代表了一个线程的栈的大小。为什么是`线程`？我们知道每一个[进程](https://en.wikipedia.org/wiki/Process_%28computing%29)可能会有[父进程](https://en.wikipedia.org/wiki/Parent_process)和[子进程](https://en.wikipedia.org/wiki/Child_process)。事实上，父进程和子进程使用不同的栈空间，每一个新进程都会拥有一个新的内核栈。在Linux内核中，这个栈由 `thread_info` 结构中的一个[union](https://en.wikipedia.org/wiki/Union_type#C.2FC.2B.2B)表示：
 
 
 ```C
